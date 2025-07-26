@@ -58,6 +58,7 @@ coverage.xml
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+media/
 
 # Flask stuff:
 instance/
@@ -129,7 +130,22 @@ dmypy.json
 # IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
 
 # Docker
-.env
-docker-compose.yml
+.dockerignore
+
+# Coverage
+.coverage
+.coverage.*
+htmlcov/

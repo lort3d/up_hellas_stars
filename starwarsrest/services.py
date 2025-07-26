@@ -19,6 +19,11 @@ class SwapiService:
     def __init__(self):
         # Create a session with retry strategy for resilience
         self.session = requests.Session()
+        # Disable SSL verification due to certificate issues with swapi.dev
+        self.session.verify = False
+        # Suppress SSL warnings
+        requests.packages.urllib3.disable_warnings()
+        
         retry_strategy = Retry(
             total=3,
             backoff_factor=1,

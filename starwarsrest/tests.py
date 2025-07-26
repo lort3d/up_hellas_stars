@@ -1,4 +1,5 @@
 import json
+import requests
 from unittest.mock import patch, Mock
 from django.test import TestCase
 from django.urls import reverse
@@ -14,6 +15,11 @@ class ModelTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
+        # Clean up any existing data to avoid conflicts
+        Character.objects.all().delete()
+        Film.objects.all().delete()
+        Starship.objects.all().delete()
+        
         self.film = Film.objects.create(
             name="A New Hope",
             swapi_id=1,
@@ -82,6 +88,8 @@ class ModelTestCase(TestCase):
             swapi_id=2
         )
         self.assertEqual(starship2.model, "T-70 X-wing")
+        # Clean up to avoid conflicts in other tests
+        starship2.delete()
 
 
 class DAOTestCase(TestCase):
@@ -89,6 +97,11 @@ class DAOTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
+        # Clean up any existing data to avoid conflicts
+        Character.objects.all().delete()
+        Film.objects.all().delete()
+        Starship.objects.all().delete()
+        
         self.film = FilmDAO.create_film({
             'name': 'The Empire Strikes Back',
             'swapi_id': 2,
@@ -255,6 +268,11 @@ class APITestCase(APITestCase):
     
     def setUp(self):
         """Set up test data"""
+        # Clean up any existing data to avoid conflicts
+        Character.objects.all().delete()
+        Film.objects.all().delete()
+        Starship.objects.all().delete()
+        
         self.film = Film.objects.create(
             name="Return of the Jedi",
             swapi_id=3,
@@ -265,8 +283,7 @@ class APITestCase(APITestCase):
         self.character = Character.objects.create(
             name="Yoda",
             swapi_id=20,
-            gender="male",
-            species="Yoda's species"
+            gender="male"
         )
         
         self.starship = Starship.objects.create(

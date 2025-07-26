@@ -1,53 +1,62 @@
 # Star Wars REST API
 
-A Dockerized Django REST API for Star Wars data with integration to the Star Wars API (SWAPI).
+A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 
 ## Features
 
-- Dockerized application with Django, PostgreSQL, and Gunicorn
 - RESTful API endpoints for Characters, Films, and Starships
-- Integration with SWAPI for official Star Wars data
-- Option to create custom/unofficial records
-- Pagination and search functionality
+- Data validation against SWAPI with option to allow custom records
+- Search functionality for all entity types
+- Pagination for large result sets
 - Swagger API documentation
-- Unit tests with coverage reports
+- Dockerized for easy deployment
 
-## Prerequisites
+## Requirements
 
 - Docker
 - Docker Compose
 
-## Quick Start
+## Getting Started
 
-1. Clone the repository
-2. Run `docker-compose up` to start the application
-3. Access the API at `http://localhost:8000`
-4. View API documentation at `http://localhost:8000/api/docs/`
+1. Clone the repository:
+   ```
+   git clone <repository-url>
+   cd starwars-rest-api
+   ```
+
+2. Start the application:
+   ```
+   docker-compose up --build
+   ```
+
+3. The API will be available at `http://localhost:8000`
+
+4. API documentation is available at `http://localhost:8000/api/docs/`
 
 ## API Endpoints
 
 ### Characters
-- `GET /api/characters/` - List all characters (paginated)
+- `GET /api/characters/` - List all characters
 - `POST /api/characters/` - Create a new character
-- `GET /api/characters/{id}/` - Retrieve a specific character
+- `GET /api/characters/{id}/` - Get a specific character
 - `PUT /api/characters/{id}/` - Update a character
 - `PATCH /api/characters/{id}/` - Partially update a character
 - `DELETE /api/characters/{id}/` - Delete a character
 - `GET /api/characters/search/?name={name}` - Search characters by name
 
 ### Films
-- `GET /api/films/` - List all films (paginated)
+- `GET /api/films/` - List all films
 - `POST /api/films/` - Create a new film
-- `GET /api/films/{id}/` - Retrieve a specific film
+- `GET /api/films/{id}/` - Get a specific film
 - `PUT /api/films/{id}/` - Update a film
 - `PATCH /api/films/{id}/` - Partially update a film
 - `DELETE /api/films/{id}/` - Delete a film
 - `GET /api/films/search/?name={name}` - Search films by name
 
 ### Starships
-- `GET /api/starships/` - List all starships (paginated)
+- `GET /api/starships/` - List all starships
 - `POST /api/starships/` - Create a new starship
-- `GET /api/starships/{id}/` - Retrieve a specific starship
+- `GET /api/starships/{id}/` - Get a specific starship
 - `PUT /api/starships/{id}/` - Update a starship
 - `PATCH /api/starships/{id}/` - Partially update a starship
 - `DELETE /api/starships/{id}/` - Delete a starship
@@ -55,75 +64,45 @@ A Dockerized Django REST API for Star Wars data with integration to the Star War
 
 ## Environment Variables
 
-- `ALLOW_UNOFFICIAL_RECORDS` - Set to True to allow creating custom records with swapi_id=0
+- `DEBUG` - Django debug mode (default: 1)
+- `SECRET_KEY` - Django secret key
+- `DB_HOST` - Database host (default: db)
+- `DB_NAME` - Database name (default: starwarsdb)
+- `DB_USER` - Database user (default: starwarsuser)
+- `DB_PASSWORD` - Database password (default: starwarspass)
+- `DB_PORT` - Database port (default: 5432)
+- `ALLOW_UNOFFICIAL_RECORDS` - Allow creation of custom records not found in SWAPI (default: True)
 
-## Development
-
-### Running Tests
-
-```bash
-docker-compose run web python manage.py test
-```
-
-### Generating Coverage Report
-
-```bash
-docker-compose run web coverage run --source='.' manage.py test
-docker-compose run web coverage report
-docker-compose run web coverage html
-```
-
-The HTML coverage report will be available in the `htmlcov/` directory.
-
-## Data Population
+## Populate with SWAPI Data
 
 To populate the database with data from SWAPI:
-
-```bash
-docker-compose run web python manage.py populate_swapi_data
+```
+docker-compose exec web python manage.py populate_swapi_data --limit 10
 ```
 
-To limit the number of records (default is 10 per entity type):
+## Running Tests
 
-```bash
-docker-compose run web python manage.py populate_swapi_data --limit 5
+To run the test suite:
+```
+docker-compose exec web python manage.py test
 ```
 
 ## Project Structure
 
-```
-starwarsrest/
-├── starwarsrest/           # Django project settings
-│   ├── settings.py         # Project settings
-│   ├── urls.py             # URL routing
-│   └── wsgi.py             # WSGI entry point
-├── starwarsrest/           # Main Django app
-│   ├── models.py           # Database models
-│   ├── views.py            # API views
-│   ├── serializers.py      # Data serializers
-│   ├── services.py         # Business logic and SWAPI integration
-│   ├── dao.py              # Data Access Objects
-│   ├── tests.py            # Unit tests
-│   └── management/
-│       └── commands/
-│           └── populate_swapi_data.py  # Data population script
-├── Dockerfile              # Docker configuration for the app
-├── docker-compose.yml      # Docker Compose configuration
-├── requirements.txt        # Python dependencies
-├── entrypoint.sh           # Docker entrypoint script
-├── manage.py               # Django management script
-├── .coveragerc             # Coverage configuration
-└── README.md               # This file
-```
+- `starwarsrest/` - Main Django application
+  - `models.py` - Data models for Characters, Films, and Starships
+  - `views.py` - API views and viewsets
+  - `serializers.py` - Serialization logic
+  - `dao.py` - Data Access Object patterns
+  - `services.py` - Business logic and SWAPI integration
+  - `management/commands/populate_swapi_data.py` - Management command to populate data from SWAPI
 
-## Architecture
+## Technologies Used
 
-This project follows a clean architecture pattern with clear separation of concerns:
-
-1. **Models**: Define the data structure and relationships
-2. **DAO (Data Access Objects)**: Handle database operations
-3. **Services**: Contain business logic and external API integration
-4. **Views**: Handle HTTP requests and responses
-5. **Serializers**: Transform data between JSON and model instances
-
-The SWAPI integration service validates records against the official Star Wars API before allowing creation of new records, unless the `ALLOW_UNOFFICIAL_RECORDS` environment variable is set to True.
+- Python 3.12
+- Django 5.0
+- Django REST Framework
+- PostgreSQL
+- Docker
+- Gunicorn
+- SWAPI (Star Wars API)
