@@ -21,6 +21,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . /app/
 
+# Make scripts executable
+RUN chmod +x ./manage.py ./entrypoint.sh
+
 # Create a non-root user
 RUN adduser --disabled-password --gecos '' appuser
 RUN chown -R appuser:appuser /app
@@ -29,8 +32,8 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
+# Set entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
 
 # Run the application
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "starwarsrest.wsgi:application"]

@@ -83,6 +83,12 @@ To populate the database with data from SWAPI:
 docker-compose run web python manage.py populate_swapi_data
 ```
 
+To limit the number of records (default is 10 per entity type):
+
+```bash
+docker-compose run web python manage.py populate_swapi_data --limit 5
+```
+
 ## Project Structure
 
 ```
@@ -104,5 +110,20 @@ starwarsrest/
 ├── Dockerfile              # Docker configuration for the app
 ├── docker-compose.yml      # Docker Compose configuration
 ├── requirements.txt        # Python dependencies
+├── entrypoint.sh           # Docker entrypoint script
+├── manage.py               # Django management script
+├── .coveragerc             # Coverage configuration
 └── README.md               # This file
 ```
+
+## Architecture
+
+This project follows a clean architecture pattern with clear separation of concerns:
+
+1. **Models**: Define the data structure and relationships
+2. **DAO (Data Access Objects)**: Handle database operations
+3. **Services**: Contain business logic and external API integration
+4. **Views**: Handle HTTP requests and responses
+5. **Serializers**: Transform data between JSON and model instances
+
+The SWAPI integration service validates records against the official Star Wars API before allowing creation of new records, unless the `ALLOW_UNOFFICIAL_RECORDS` environment variable is set to True.
