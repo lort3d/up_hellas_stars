@@ -70,7 +70,10 @@ docker-compose run web python manage.py test
 ```bash
 docker-compose run web coverage run --source='.' manage.py test
 docker-compose run web coverage report
+docker-compose run web coverage html
 ```
+
+The HTML coverage report will be available in the `htmlcov/` directory.
 
 ## Data Population
 
