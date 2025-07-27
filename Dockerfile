@@ -21,11 +21,8 @@ RUN apt-get update \
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project
-COPY . /app/
-
-# Make scripts executable
-RUN chmod +x ./manage.py ./entrypoint.sh
+# Create directory structure
+# RUN mkdir -p /app/starwarsrest
 
 # Create a non-root user
 RUN adduser --disabled-password --gecos '' appuser
@@ -38,5 +35,3 @@ EXPOSE 8000
 # Set entrypoint
 ENTRYPOINT ["./entrypoint.sh"]
 
-# Run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "starwarsrest.wsgi:application"]

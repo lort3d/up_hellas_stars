@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16
@@ -13,10 +11,12 @@ services:
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
       - "5432:5432"
+    networks:
+      - hellas_stars_net
 
   web:
     build: .
-    command: gunicorn starwarsrest.wsgi:application --bind 0.0.0.0:8000
+    command: gunicorn starwarsrest.wsgi:application --bind 0.0.0.0:8000 --reload
     volumes:
       - .:/app
     ports:
@@ -27,6 +27,12 @@ services:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
     depends_on:
       - db
+    networks:
+      - hellas_stars_net
 
 volumes:
   postgres_data:
+
+networks:
+  hellas_stars_net:
+    driver: bridge
