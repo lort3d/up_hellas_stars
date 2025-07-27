@@ -88,6 +88,12 @@ DATABASES = {
     )
 }
 
+# Test database configuration
+DATABASES['default']['TEST'] = {
+    'NAME': 'test_starwarsdb',
+    'CREATE_DB': False,  # We'll handle schema creation in our custom test runner
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
