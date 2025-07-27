@@ -11,6 +11,7 @@ from .serializers import (
 )
 from .dao import CharacterDAO, FilmDAO, StarshipDAO
 from .services import SwapiService, ALLOW_UNOFFICIAL_RECORDS
+from .permissions import IsAuthenticatedOrReadOnly
 
 
 class CharacterViewSet(viewsets.ModelViewSet):
@@ -22,6 +23,7 @@ class CharacterViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name']
     filterset_fields = ['name']
+    permission_classes = [IsAuthenticatedOrReadOnly]
     
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
@@ -105,6 +107,7 @@ class FilmViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name']
     filterset_fields = ['name']
+    permission_classes = [IsAuthenticatedOrReadOnly]
     
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
@@ -188,6 +191,7 @@ class StarshipViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     search_fields = ['name', 'model']
     filterset_fields = ['name', 'model']
+    permission_classes = [IsAuthenticatedOrReadOnly]
     
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
