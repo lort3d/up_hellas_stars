@@ -9,7 +9,7 @@ from celery import shared_task, chain
 from celery.exceptions import CeleryError
 
 
-def _populate_entities(swapi_service, entity_type, model_class, populate_method):
+def _populate_entities(entity_type, model_class):
     """Common function to populate entities from SWAPI
     
     Args:
@@ -19,6 +19,14 @@ def _populate_entities(swapi_service, entity_type, model_class, populate_method)
         populate_method: Method to convert SWAPI data to model dict
     """
     print(f'Populating {entity_type}...')
+    
+    swapi_service = SwapiService()
+    if entity_type == 'films':
+        populate_method = swapi_service.populate_film_from_swapi
+    elif entity_type == 'people':
+        populate_method = swapi_service.populate_character_from_swapi
+    elif entity_type == 'starships':
+        populate_method = swapi_service.populate_starship_from_swapi
     
     try:
         url = f"{SwapiService.BASE_URL}/{entity_type}/"
@@ -132,36 +140,27 @@ def _populate_entities(swapi_service, entity_type, model_class, populate_method)
 @shared_task
 def populate_films_task(*args, **kwargs):
     """Celery task to populate films from SWAPI"""
-    swapi_service = SwapiService()
     return _populate_entities(
-        swapi_service,
         'films',
         Film,
-        swapi_service.populate_film_from_swapi
     )
 
 
 @shared_task
 def populate_characters_task(*args, **kwargs):
     """Celery task to populate characters from SWAPI"""
-    swapi_service = SwapiService()
     return _populate_entities(
-        swapi_service,
         'people',
         Character,
-        swapi_service.populate_character_from_swapi
     )
 
 
 @shared_task
 def populate_starships_task(*args, **kwargs):
     """Celery task to populate starships from SWAPI"""
-    swapi_service = SwapiService()
     return _populate_entities(
-        swapi_service,
         'starships',
         Starship,
-        swapi_service.populate_starship_from_swapi
     )
 
 

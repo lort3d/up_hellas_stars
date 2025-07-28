@@ -2,6 +2,26 @@
 
 A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 
+## Table of Contents
+
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Architecture](#architecture)
+- [Requirements](#requirements)
+- [Getting Started](#getting-started)
+  - [Quick Start with Docker](#quick-start-with-docker)
+  - [Environment Variables](#environment-variables)
+- [API Endpoints](#api-endpoints)
+  - [Characters](#characters)
+  - [Films](#films)
+  - [Starships](#starships)
+- [Authentication](#authentication)
+- [Data Population](#data-population)
+- [Testing](#testing)
+- [Project Structure](#project-structure)
+- [Contributing](#contributing)
+- [License](#license)
+
 ## Features
 
 - RESTful API endpoints for Characters, Films, and Starships
@@ -10,6 +30,42 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - Pagination for large result sets
 - Swagger API documentation
 - Dockerized for easy deployment
+- Redis caching for improved performance
+- Celery for asynchronous tasks
+- Authentication with token-based system
+
+## Technologies Used
+
+- Python 3.12
+- Django 5.0
+- Django REST Framework
+- PostgreSQL
+- Redis
+- Celery
+- Docker & Docker Compose
+- Gunicorn
+- SWAPI (Star Wars API)
+
+## Architecture
+
+The application follows a layered architecture pattern:
+
+1. **Models Layer** - Django models defining the data structure
+2. **DAO Layer** - Data Access Objects for database operations
+3. **Services Layer** - External API integrations
+4. **Views Layer** - Business logic and REST API endpoints
+5. **Serializers Layer** - Data serialization/deserialization
+
+```mermaid
+graph TD
+    A[Client] --> B[Views]
+    B --> C[Serializers]
+    B --> D[DAO]
+    D --> E[Models]
+    B --> F[Services]
+    F --> G[SWAPI]
+    B --> H[Cache]
+```
 
 ## Requirements
 
@@ -18,14 +74,16 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 
 ## Getting Started
 
+### Quick Start with Docker
+
 1. Clone the repository:
-   ```
+   ```bash
    git clone <repository-url>
-   cd starwars-rest-api
+   cd up_hellas_stars
    ```
 
 2. Start the application:
-   ```
+   ```bash
    docker-compose up --build
    ```
 
@@ -33,9 +91,34 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 
 4. API documentation is available at `http://localhost:8000/api/docs/`
 
+5. Admin interface is available at `http://localhost:8000/admin/`
+   - Default superuser: username `admin`, password `admin`
+   - Default simple user: username `user`, password `user`
+
+### Environment Variables
+
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| `DEBUG` | Django debug mode | 1 |
+| `SECRET_KEY` | Django secret key | Auto-generated |
+| `DB_HOST` | Database host | db |
+| `DB_NAME` | Database name | starwarsdb |
+| `DB_USER` | Database user | starwarsuser |
+| `DB_PASSWORD` | Database password | starwarspass |
+| `DB_PORT` | Database port | 5432 |
+| `ALLOW_UNOFFICIAL_RECORDS` | Allow creation of custom records not found in SWAPI | True |
+| `REDIS_URL` | Redis connection URL | redis://localhost:6379/1 |
+| `CELERY_BROKER_URL` | Celery broker URL | redis://localhost:6379/0 |
+| `CELERY_RESULT_BACKEND` | Celery result backend | redis://localhost:6379/0 |
+
+Note: Instead of using a DATABASE_URL, this project now uses individual environment variables for database configuration.
+
 ## API Endpoints
 
+All endpoints support standard REST operations with pagination and filtering.
+
 ### Characters
+
 - `GET /api/characters/` - List all characters
 - `POST /api/characters/` - Create a new character
 - `GET /api/characters/{id}/` - Get a specific character
@@ -45,6 +128,7 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - `GET /api/characters/search/?name={name}` - Search characters by name
 
 ### Films
+
 - `GET /api/films/` - List all films
 - `POST /api/films/` - Create a new film
 - `GET /api/films/{id}/` - Get a specific film
@@ -54,6 +138,7 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - `GET /api/films/search/?name={name}` - Search films by name
 
 ### Starships
+
 - `GET /api/starships/` - List all starships
 - `POST /api/starships/` - Create a new starship
 - `GET /api/starships/{id}/` - Get a specific starship
@@ -62,47 +147,81 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - `DELETE /api/starships/{id}/` - Delete a starship
 - `GET /api/starships/search/?name={name}` - Search starships by name
 
-## Environment Variables
+## Authentication
 
-- `DEBUG` - Django debug mode (default: 1)
-- `SECRET_KEY` - Django secret key
-- `DB_HOST` - Database host (default: db)
-- `DB_NAME` - Database name (default: starwarsdb)
-- `DB_USER` - Database user (default: starwarsuser)
-- `DB_PASSWORD` - Database password (default: starwarspass)
-- `DB_PORT` - Database port (default: 5432)
-- `ALLOW_UNOFFICIAL_RECORDS` - Allow creation of custom records not found in SWAPI (default: True)
+The API uses session and token-based authentication. 
+To get a token:
 
-## Populate with SWAPI Data
+1. Create a user account through the admin interface or API
+2. Request a token using the management command:
+   ```bash
+   docker-compose exec web python manage.py get_user_token <username>
+   ```
+3. Include the token in the Authorization header:
+   ```
+   Authorization: Token <your-token>
+   ```
 
-To populate the database with data from SWAPI:
+## Data Population
+
+The application comes with a management command to populate the database with real Star Wars data from SWAPI:
+
+```bash
+docker-compose exec web python manage.py populate_swapi_data
 ```
-docker-compose exec web python manage.py populate_swapi_data --limit 10
+
+This command will:
+1. Fetch all films, characters, and starships from SWAPI
+2. Create records in the database
+3. Establish relationships between entities
+4. Handle duplicates by checking SWAPI IDs
+
+The population process is asynchronous using Celery.
+
+## Testing
+
+To run tests with coverage:
+```bash
+docker-compose exec web ./run_tests.sh
 ```
 
-## Running Tests
-
-To run the test suite:
-```
-docker-compose exec web python manage.py test
-```
+The project includes:
+- Tests for data access objects
+- Unit tests for models and services
+- Integration tests for API endpoints
+- Tests for management commands
 
 ## Project Structure
 
-- `starwarsrest/` - Main Django application
-  - `models.py` - Data models for Characters, Films, and Starships
-  - `views.py` - API views and viewsets
-  - `serializers.py` - Serialization logic
-  - `dao.py` - Data Access Object patterns
-  - `services.py` - Business logic and SWAPI integration
-  - `management/commands/populate_swapi_data.py` - Management command to populate data from SWAPI
-
-## Technologies Used
-
-- Python 3.12
-- Django 5.0
-- Django REST Framework
-- PostgreSQL
-- Docker
-- Gunicorn
-- SWAPI (Star Wars API)
+```
+starwarsrest/
+├── management/
+│   └── commands/
+│       ├── populate_swapi_data.py - Management command to populate data from SWAPI
+│       └── get_user_token.py - Management command to get user authentication token
+├── migrations/ - Database migration files
+├── __init__.py
+├── apps.py - Django app configuration
+├── asgi.py - ASGI config for Django
+├── cache_middleware.py - Redis cache middleware
+├── cache_utils.py - Cache utilities
+├── celery.py - Celery configuration
+├── dao.py - Data Access Object patterns
+├── models.py - Data models for Characters, Films, and Starships
+├── permissions.py - Custom permission classes
+├── serializers.py - Serialization logic
+├── services.py - Business logic and SWAPI integration
+├── settings.py - Django settings
+├── signals.py - Django signals
+├── tasks.py - Celery tasks
+├── test_runner.py - Custom test runner
+├── test_settings.py - Test settings
+├── tests.py - Unit tests
+├── tests_dao.py - DAO tests
+├── tests_endpoints.py - Endpoint tests
+├── tests_get_user_token.py - Token command tests
+├── tests_management_command.py - Management command tests
+├── urls.py - URL routing
+├── views.py - API views and viewsets
+└── wsgi.py - WSGI config for Django
+```

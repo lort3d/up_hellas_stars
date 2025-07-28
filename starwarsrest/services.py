@@ -17,11 +17,9 @@ class SwapiService:
     BASE_URL = "https://swapi.dev/api"
     
     def __init__(self):
-        # Create a session with retry strategy for resilience
         self.session = requests.Session()
         # Disable SSL verification due to certificate issues with swapi.dev
         self.session.verify = False
-        # Suppress SSL warnings
         requests.packages.urllib3.disable_warnings()
         
         retry_strategy = Retry(
@@ -34,7 +32,6 @@ class SwapiService:
         self.session.mount("https://", adapter)
     
     def _make_request(self, url, timeout=10):
-        """Make a request to SWAPI with proper error handling"""
         try:
             response = self.session.get(url, timeout=timeout)
             response.raise_for_status()

@@ -9,7 +9,6 @@ from starwarsrest.management.commands.populate_swapi_data import (
     populate_starships_task,
     _populate_entities
 )
-from starwarsrest.services import SwapiService
 
 
 class PopulateSwapiDataTest(TestCase):
@@ -201,12 +200,9 @@ class PopulateSwapiDataTest(TestCase):
         )
         
         # Run the function directly
-        swapi_service = SwapiService()
         result = _populate_entities(
-            swapi_service,
             'films',
             Film,
-            swapi_service.populate_film_from_swapi
         )
         
         # Check that only one film was created (the other already existed)
@@ -224,10 +220,8 @@ class PopulateSwapiDataTest(TestCase):
         # Run the function directly
         swapi_service = SwapiService()
         result = _populate_entities(
-            swapi_service,
             'films',
             Film,
-            swapi_service.populate_film_from_swapi
         )
         
         # Check that no records were created
@@ -243,13 +237,10 @@ class PopulateSwapiDataTest(TestCase):
         mock_make_request.side_effect = Exception('Network error')
         
         # Run the function directly
-        swapi_service = SwapiService()
         with self.assertRaises(Exception) as context:
             _populate_entities(
-                swapi_service,
                 'films',
                 Film,
-                swapi_service.populate_film_from_swapi
             )
         
         # Check that the exception message is correct
