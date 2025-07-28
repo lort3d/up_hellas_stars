@@ -8,7 +8,7 @@ cd /app
 
 # Run the tests with coverage using test settings
 echo "Running tests with coverage..."
-coverage run --source='.' manage.py test starwarsrest.tests --settings=starwarsrest.test_settings -v 2
+coverage run --source='.' manage.py test starwarsrest.tests -v 2
 
 # Generate coverage report
 echo "Generating coverage report..."

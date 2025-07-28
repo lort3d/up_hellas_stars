@@ -120,7 +120,13 @@ class CharacterEndpointTest(TestCase):
         response = self.client.post(reverse('character-list'), self.character_data, format='json')
         # With current permission settings, regular users should be able to create
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-
+    '''
+    def test_create_character_duplicate_name(self):
+        """Test creating a character with duplicate name should fail"""
+        self.client.force_authenticate(user=self.regular_user)
+        response = self.client.post(reverse('character-list'), self.character_data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+    '''
     def test_update_character_unauthorized(self):
         """Test updating a character without authentication"""
         updated_data = {'name': 'Luke Updated'}

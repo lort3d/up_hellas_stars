@@ -27,17 +27,18 @@ echo "Creating regular user..."
 python manage.py shell -c "
 from django.contrib.auth import get_user_model
 User = get_user_model()
-if not User.objects.filter(username='user').exists():
-    User.objects.create_user('user', 'user@example.com', 'user')
-    print('Regular user created.')
-else:
+try:
+    user_obj = User.objects.get(username='user')
     print('Regular user already exists.')
+except:
+    user_obj = User.objects.create_user('user', 'user@example.com', 'user')
+    print('Regular user created.')
 "
 
 # Populate SWAPI data only once
 if [ ! -f /app/.swapi_data_populated ]; then
     echo "Populating SWAPI data..."
-    python manage.py populate_swapi_data
+python manage.py populate_swapi_data
     touch /app/.swapi_data_populated
     echo "SWAPI data populated."
 else

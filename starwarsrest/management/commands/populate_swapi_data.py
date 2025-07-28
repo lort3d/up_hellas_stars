@@ -90,6 +90,10 @@ class Command(BaseCommand):
                 return
             
             characters_data = response['results'][:limit]
+            print('')
+            print('limit')
+            print(limit)
+            print(characters_data)
             
             with transaction.atomic():
                 for character_data in characters_data:

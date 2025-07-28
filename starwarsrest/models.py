@@ -20,6 +20,9 @@ class Film(models.Model):
     
     def __str__(self):
         return self.name
+    
+    class Meta:
+        ordering = ['name']  # Add default ordering
 
 
 class Character(models.Model):
@@ -46,6 +49,9 @@ class Character(models.Model):
     
     def __str__(self):
         return self.name
+    
+    class Meta:
+        ordering = ['name']  # Add default ordering
 
 
 class Starship(models.Model):
@@ -58,7 +64,8 @@ class Starship(models.Model):
     # Unique constraint on name and model pair
     class Meta:
         unique_together = ('name', 'model')
-        
+        ordering = ['name', 'model']  # Add default ordering
+    
     swapi_id = models.IntegerField(default=0, help_text="0 for custom/unofficial records")
     
     # Additional fields from SWAPI
