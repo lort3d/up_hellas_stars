@@ -4,9 +4,10 @@
 # Start Redis server in the background
 redis-server --daemonize yes
 
+# Run migrations
 echo "Running migrations..."
-    python manage.py makemigrations
-    python manage.py migrate --noinput
+python manage.py makemigrations
+python manage.py migrate --noinput
 
 # Collect static files
 echo "Collecting static files..."
@@ -37,10 +38,15 @@ except:
     print('Regular user created.')
 "
 
-echo "Populating SWAPI data..."
-python manage.py populate_swapi_data
-touch /app/.swapi_data_populated
-echo "SWAPI data populated."
+# Populate SWAPI data only once
+if [ ! -f /app/.swapi_data_populated ]; then
+    echo "Populating SWAPI data..."
+    python manage.py populate_swapi_data
+    touch /app/.swapi_data_populated
+    echo "SWAPI data populated."
+else
+    echo "SWAPI data already populated, skipping."
+fi
 
 # Start the application
 exec "$@"

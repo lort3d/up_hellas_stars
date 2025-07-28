@@ -15,6 +15,7 @@ RUN apt-get update \
         gcc \
         python3-dev \
         curl \
+        redis-server \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
