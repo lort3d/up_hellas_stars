@@ -100,67 +100,62 @@ class SwapiService:
         Returns True if valid or if unofficial records are allowed.
         """
         # If swapi_id is 0, it's a custom record
-        if swapi_id == 0:
-            return ALLOW_UNOFFICIAL_RECORDS
+        if not ALLOW_UNOFFICIAL_RECORDS:
         
-        # Try to get character by ID first
-        if swapi_id:
-            swapi_character = self.get_character_by_id(swapi_id)
-            if swapi_character:
-                # Verify the name matches if provided
-                if name and swapi_character['name'].lower() != name.lower():
-                    raise ValidationError(
-                        f"Character name '{name}' does not match SWAPI record with ID {swapi_id}"
-                    )
-                return True
-            else:
-                raise ValidationError(f"No character found in SWAPI with ID {swapi_id}")
-        
-        # If we have a name, search for it
-        if name:
-            swapi_character = self.search_character(name)
-            if swapi_character:
-                return True
-            else:
-                # No match found in SWAPI
-                return ALLOW_UNOFFICIAL_RECORDS
-        
-        # If we get here, we have neither name nor swapi_id
-        return ALLOW_UNOFFICIAL_RECORDS
+            # Try to get character by ID first
+            if swapi_id:
+                swapi_character = self.get_character_by_id(swapi_id)
+                if swapi_character:
+                    # Verify the name matches if provided
+                    if name and swapi_character['name'].lower() != name.lower():
+                        raise ValidationError(
+                            f"Character name '{name}' does not match SWAPI record with ID {swapi_id}"
+                        )
+                    return True
+                else:
+                    return False
+            
+            # If we have a name, search for it
+            if name:
+                swapi_character = self.search_character(name)
+                if swapi_character:
+                    return True
+                else:
+                    return False
+
+        return True
     
     def validate_film_data(self, name, swapi_id=0):
         """
         Validate film data against SWAPI.
         Returns True if valid or if unofficial records are allowed.
         """
-        # If swapi_id is 0, it's a custom record
-        if swapi_id == 0:
-            return ALLOW_UNOFFICIAL_RECORDS
+
+        if not ALLOW_UNOFFICIAL_RECORDS:
         
-        # Try to get film by ID first
-        if swapi_id:
-            swapi_film = self.get_film_by_id(swapi_id)
-            if swapi_film:
-                # Verify the title matches if provided
-                if name and swapi_film['title'].lower() != name.lower():
-                    raise ValidationError(
-                        f"Film title '{name}' does not match SWAPI record with ID {swapi_id}"
-                    )
-                return True
-            else:
-                raise ValidationError(f"No film found in SWAPI with ID {swapi_id}")
+            # Try to get film by ID first
+            if swapi_id:
+                swapi_film = self.get_film_by_id(swapi_id)
+                if swapi_film:
+                    # Verify the title matches if provided
+                    if name and swapi_film['title'].lower() != name.lower():
+                        raise ValidationError(
+                            f"Film title '{name}' does not match SWAPI record with ID {swapi_id}"
+                        )
+                    return True
+                else:
+                    return False
+            
+            # If we have a title, search for it
+            if name:
+                swapi_film = self.search_film(name)
+                if swapi_film:
+                    return True
+                else:
+                    # No match found in SWAPI
+                    return False
         
-        # If we have a title, search for it
-        if name:
-            swapi_film = self.search_film(name)
-            if swapi_film:
-                return True
-            else:
-                # No match found in SWAPI
-                return ALLOW_UNOFFICIAL_RECORDS
-        
-        # If we get here, we have neither title nor swapi_id
-        return ALLOW_UNOFFICIAL_RECORDS
+        return True
     
     def validate_starship_data(self, name, model, swapi_id=0):
         """
@@ -168,41 +163,38 @@ class SwapiService:
         Returns True if valid or if unofficial records are allowed.
         """
         # If swapi_id is 0, it's a custom record
-        if swapi_id == 0:
-            return ALLOW_UNOFFICIAL_RECORDS
+        if not ALLOW_UNOFFICIAL_RECORDS:
         
-        # Try to get starship by ID first
-        if swapi_id:
-            swapi_starship = self.get_starship_by_id(swapi_id)
-            if swapi_starship:
-                # Verify the name and model match if provided
-                if name and swapi_starship['name'].lower() != name.lower():
-                    raise ValidationError(
-                        f"Starship name '{name}' does not match SWAPI record with ID {swapi_id}"
-                    )
-                if model and swapi_starship['model'].lower() != model.lower():
-                    raise ValidationError(
-                        f"Starship model '{model}' does not match SWAPI record with ID {swapi_id}"
-                    )
-                return True
-            else:
-                raise ValidationError(f"No starship found in SWAPI with ID {swapi_id}")
+            # Try to get starship by ID first
+            if swapi_id:
+                swapi_starship = self.get_starship_by_id(swapi_id)
+                if swapi_starship:
+                    # Verify the name and model match if provided
+                    if name and swapi_starship['name'].lower() != name.lower():
+                        raise ValidationError(
+                            f"Starship name '{name}' does not match SWAPI record with ID {swapi_id}"
+                        )
+                    if model and swapi_starship['model'].lower() != model.lower():
+                        raise ValidationError(
+                            f"Starship model '{model}' does not match SWAPI record with ID {swapi_id}"
+                        )
+                    return True
+                else:
+                    return False
+            
+            # If we have a name, search for it
+            if name:
+                swapi_starship = self.search_starship(name)
+                if swapi_starship:
+                    # If we also have a model, verify it matches
+                    if model and swapi_starship['model'].lower() != model.lower():
+                        # Model doesn't match, but name does - this might be allowed
+                        return ALLOW_UNOFFICIAL_RECORDS
+                    return True
+                else:
+                    return False
         
-        # If we have a name, search for it
-        if name:
-            swapi_starship = self.search_starship(name)
-            if swapi_starship:
-                # If we also have a model, verify it matches
-                if model and swapi_starship['model'].lower() != model.lower():
-                    # Model doesn't match, but name does - this might be allowed
-                    return ALLOW_UNOFFICIAL_RECORDS
-                return True
-            else:
-                # No match found in SWAPI
-                return ALLOW_UNOFFICIAL_RECORDS
-        
-        # If we get here, we have insufficient data
-        return ALLOW_UNOFFICIAL_RECORDS
+        return True
     
     def populate_character_from_swapi(self, swapi_data):
         """Convert SWAPI character data to our model format"""

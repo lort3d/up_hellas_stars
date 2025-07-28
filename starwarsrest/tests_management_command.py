@@ -3,6 +3,13 @@ from unittest.mock import patch, Mock
 from django.test import TestCase
 from django.core.management import call_command
 from starwarsrest.models import Character, Film, Starship
+from starwarsrest.management.commands.populate_swapi_data import (
+    populate_films_task, 
+    populate_characters_task, 
+    populate_starships_task,
+    _populate_entities
+)
+from starwarsrest.services import SwapiService
 
 
 class PopulateSwapiDataTest(TestCase):
@@ -104,63 +111,84 @@ class PopulateSwapiDataTest(TestCase):
         }
 
     @patch('starwarsrest.services.SwapiService._make_request')
-    def test_populate_swapi_data_command(self, mock_make_request):
-        """Test the populate_swapi_data management command"""
-        # Configure mock to return different data based on the URL
-        def side_effect(url):
-            if '/films/' in url:
-                return self.sample_films_data
-            elif '/people/' in url:
-                return self.sample_characters_data
-            elif '/starships/' in url:
-                return self.sample_starships_data
-            return None
+    def test_populate_films_task(self, mock_make_request):
+        """Test the populate_films_task Celery task"""
+        # Configure mock to return film data
+        mock_make_request.return_value = self.sample_films_data
 
-        mock_make_request.side_effect = side_effect
-
-        # Capture command output
-        out = StringIO()
+        # Run the task directly
+        result = populate_films_task()
         
-        # Run the management command
-        call_command('populate_swapi_data', limit=2, stdout=out)
-        
-        # Check that the command output contains success messages
-        output = out.getvalue()
-        self.assertIn('Starting to populate database', output)
-        self.assertIn('Successfully populated database', output)
+        # Check that the task was successful
+        self.assertIn('Successfully populated', result)
         
         # Check that records were created in the database
         self.assertEqual(Film.objects.count(), 2)
-        self.assertEqual(Character.objects.count(), 2)
-        self.assertEqual(Starship.objects.count(), 2)
         
         # Check specific records exist
         film = Film.objects.get(name='A New Hope')
         self.assertEqual(film.episode_id, 4)
         self.assertEqual(film.director, 'George Lucas')
+
+    @patch('starwarsrest.services.SwapiService._make_request')
+    def test_populate_characters_task(self, mock_make_request):
+        """Test the populate_characters_task Celery task"""
+        # First populate films as characters reference films
+        with patch('starwarsrest.services.SwapiService._make_request') as mock_films_request:
+            mock_films_request.return_value = self.sample_films_data
+            populate_films_task()
+            
+        # Configure mock to return character data
+        mock_make_request.return_value = self.sample_characters_data
+
+        # Run the task directly
+        result = populate_characters_task()
         
+        # Check that the task was successful
+        self.assertIn('Successfully populated', result)
+        
+        # Check that records were created in the database
+        self.assertEqual(Character.objects.count(), 2)
+        
+        # Check specific records exist
         character = Character.objects.get(name='Luke Skywalker')
         self.assertEqual(character.eye_color, 'blue')
         self.assertEqual(character.gender, 'male')
+
+    @patch('starwarsrest.services.SwapiService._make_request')
+    def test_populate_starships_task(self, mock_make_request):
+        """Test the populate_starships_task Celery task"""
+        # First populate films and characters as starships reference them
+        with patch('starwarsrest.services.SwapiService._make_request') as mock_films_request:
+            mock_films_request.return_value = self.sample_films_data
+            populate_films_task()
+            
+        with patch('starwarsrest.services.SwapiService._make_request') as mock_characters_request:
+            mock_characters_request.return_value = self.sample_characters_data
+            populate_characters_task()
+            
+        # Configure mock to return starship data
+        mock_make_request.return_value = self.sample_starships_data
+
+        # Run the task directly
+        result = populate_starships_task()
         
+        # Check that the task was successful
+        self.assertIn('Successfully populated', result)
+        
+        # Check that records were created in the database
+        self.assertEqual(Starship.objects.count(), 2)
+        
+        # Check specific records exist
         starship = Starship.objects.get(name='CR90 corvette')
         self.assertEqual(starship.starship_class, 'corvette')
         self.assertEqual(starship.manufacturer, 'Corellian Engineering Corporation')
 
     @patch('starwarsrest.services.SwapiService._make_request')
-    def test_populate_swapi_data_with_existing_records(self, mock_make_request):
-        """Test the command handles existing records correctly"""
+    def test_populate_entities_with_existing_records(self, mock_make_request):
+        """Test that _populate_entities handles existing records correctly"""
         # Configure mock to return data
-        def side_effect(url):
-            if '/films/' in url:
-                return self.sample_films_data
-            elif '/people/' in url:
-                return self.sample_characters_data
-            elif '/starships/' in url:
-                return self.sample_starships_data
-            return None
-
-        mock_make_request.side_effect = side_effect
+        mock_make_request.return_value = self.sample_films_data
 
         # Create a film that already exists
         Film.objects.create(
@@ -172,63 +200,60 @@ class PopulateSwapiDataTest(TestCase):
             release_date='1977-05-25'
         )
         
-        # Capture command output
-        out = StringIO()
-        
-        # Run the management command
-        call_command('populate_swapi_data', limit=2, stdout=out)
+        # Run the function directly
+        swapi_service = SwapiService()
+        result = _populate_entities(
+            swapi_service,
+            'films',
+            Film,
+            swapi_service.populate_film_from_swapi
+        )
         
         # Check that only one film was created (the other already existed)
         self.assertEqual(Film.objects.count(), 2)
-        self.assertEqual(Character.objects.count(), 2)
-        self.assertEqual(Starship.objects.count(), 2)
         
-        # Check that the output contains the warning about existing film
-        output = out.getvalue()
-        self.assertIn("Film 'A New Hope' already exists", output)
+        # Check that the result mentions the existing record
+        self.assertIn('Successfully populated 1 films', result)
 
     @patch('starwarsrest.services.SwapiService._make_request')
-    def test_populate_swapi_data_with_no_data(self, mock_make_request):
-        """Test the command handles empty data responses correctly"""
+    def test_populate_entities_with_no_data(self, mock_make_request):
+        """Test that _populate_entities handles empty data responses correctly"""
         # Configure mock to return empty data
         mock_make_request.return_value = None
         
-        # Capture command output
-        out = StringIO()
-        
-        # Run the management command
-        call_command('populate_swapi_data', limit=5, stdout=out)
-        
-        # Check that the command output contains warning messages
-        output = out.getvalue()
-        self.assertIn('No films data received from SWAPI', output)
-        self.assertIn('No characters data received from SWAPI', output)
-        self.assertIn('No starships data received from SWAPI', output)
+        # Run the function directly
+        swapi_service = SwapiService()
+        result = _populate_entities(
+            swapi_service,
+            'films',
+            Film,
+            swapi_service.populate_film_from_swapi
+        )
         
         # Check that no records were created
         self.assertEqual(Film.objects.count(), 0)
-        self.assertEqual(Character.objects.count(), 0)
-        self.assertEqual(Starship.objects.count(), 0)
+        
+        # Check that the result mentions no data
+        self.assertIn('Successfully populated 0 films', result)
 
     @patch('starwarsrest.services.SwapiService._make_request')
-    def test_populate_swapi_data_with_request_exception(self, mock_make_request):
-        """Test the command handles request exceptions correctly"""
+    def test_populate_entities_with_request_exception(self, mock_make_request):
+        """Test that _populate_entities handles request exceptions correctly"""
         # Configure mock to raise an exception
         mock_make_request.side_effect = Exception('Network error')
         
-        # Capture command output
-        out = StringIO()
+        # Run the function directly
+        swapi_service = SwapiService()
+        with self.assertRaises(Exception) as context:
+            _populate_entities(
+                swapi_service,
+                'films',
+                Film,
+                swapi_service.populate_film_from_swapi
+            )
         
-        # Run the management command
-        call_command('populate_swapi_data', limit=5, stdout=out)
-        
-        # Check that the command output contains error messages
-        output = out.getvalue()
-        self.assertIn('Error populating films', output)
-        self.assertIn('Error populating characters', output)
-        self.assertIn('Error populating starships', output)
+        # Check that the exception message is correct
+        self.assertIn('Error populating films', str(context.exception))
         
         # Check that no records were created
         self.assertEqual(Film.objects.count(), 0)
-        self.assertEqual(Character.objects.count(), 0)
-        self.assertEqual(Starship.objects.count(), 0)
