@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'drf_spectacular',
     'django_filters',
-    'starwarsrest',
+    'starwarsrest.apps.StarwarsrestConfig',
 ]
 
 MIDDLEWARE = [
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'starwarsrest.cache_middleware.RedisCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'starwarsrest.urls'
@@ -158,6 +159,14 @@ SPECTACULAR_SETTINGS = {
     'DESCRIPTION': 'A REST API for Star Wars data',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+}
+
+# Redis cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': config('REDIS_URL', default='redis://localhost:6379/1'),
+    }
 }
 
 # Celery Configuration
