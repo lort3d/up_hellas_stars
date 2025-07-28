@@ -10,52 +10,53 @@ class Command(BaseCommand):
     help = 'Populate the database with data from SWAPI'
     
     def add_arguments(self, parser):
-        parser.add_argument(
-            '--limit',
-            type=int,
-            default=10,
-            help='Limit the number of records to fetch per entity type (default: 10)'
-        )
+        pass
     
     def handle(self, *args, **options):
-        limit = options['limit']
         swapi_service = SwapiService()
         
         self.stdout.write(
-            self.style.SUCCESS(f'Starting to populate database with up to {limit} records per entity type')
+            self.style.SUCCESS('Starting to populate database with SWAPI data')
         )
         
         # Populate films
-        self.populate_films(swapi_service, limit)
+        self.populate_films(swapi_service)
         
         # Populate characters
-        self.populate_characters(swapi_service, limit)
+        self.populate_characters(swapi_service)
         
         # Populate starships
-        self.populate_starships(swapi_service, limit)
+        self.populate_starships(swapi_service)
         
         self.stdout.write(
             self.style.SUCCESS('Successfully populated database with SWAPI data')
         )
     
-    def populate_films(self, swapi_service, limit):
+    def populate_films(self, swapi_service):
         """Populate films from SWAPI"""
         self.stdout.write('Populating films...')
         
         try:
             url = f"{SwapiService.BASE_URL}/films/"
-            response = swapi_service._make_request(url)
+            all_films_data = []
             
-            if not response or 'results' not in response:
-                self.stdout.write(
-                    self.style.WARNING('No films data received from SWAPI')
-                )
-                return
-            
-            films_data = response['results'][:limit]
+            # Fetch all pages of films
+            while url:
+                response = swapi_service._make_request(url)
+                
+                if not response or 'results' not in response:
+                    self.stdout.write(
+                        self.style.WARNING('No films data received from SWAPI')
+                    )
+                    break
+                
+                all_films_data.extend(response['results'])
+                
+                # Check if there's a next page
+                url = response.get('next')
             
             with transaction.atomic():
-                for film_data in films_data:
+                for film_data in all_films_data:
                     # Check if film already exists
                     swapi_id = int(film_data['url'].split('/')[-2])
                     if Film.objects.filter(swapi_id=swapi_id).exists():
@@ -75,28 +76,31 @@ class Command(BaseCommand):
                 self.style.ERROR(f"Error populating films: {str(e)}")
             )
     
-    def populate_characters(self, swapi_service, limit):
+    def populate_characters(self, swapi_service):
         """Populate characters from SWAPI"""
         self.stdout.write('Populating characters...')
         
         try:
             url = f"{SwapiService.BASE_URL}/people/"
-            response = swapi_service._make_request(url)
+            all_characters_data = []
             
-            if not response or 'results' not in response:
-                self.stdout.write(
-                    self.style.WARNING('No characters data received from SWAPI')
-                )
-                return
-            
-            characters_data = response['results'][:limit]
-            print('')
-            print('limit')
-            print(limit)
-            print(characters_data)
+            # Fetch all pages of characters
+            while url:
+                response = swapi_service._make_request(url)
+                
+                if not response or 'results' not in response:
+                    self.stdout.write(
+                        self.style.WARNING('No characters data received from SWAPI')
+                    )
+                    break
+                
+                all_characters_data.extend(response['results'])
+                
+                # Check if there's a next page
+                url = response.get('next')
             
             with transaction.atomic():
-                for character_data in characters_data:
+                for character_data in all_characters_data:
                     # Check if character already exists
                     swapi_id = int(character_data['url'].split('/')[-2])
                     if Character.objects.filter(swapi_id=swapi_id).exists():
@@ -116,24 +120,31 @@ class Command(BaseCommand):
                 self.style.ERROR(f"Error populating characters: {str(e)}")
             )
     
-    def populate_starships(self, swapi_service, limit):
+    def populate_starships(self, swapi_service):
         """Populate starships from SWAPI"""
         self.stdout.write('Populating starships...')
         
         try:
             url = f"{SwapiService.BASE_URL}/starships/"
-            response = swapi_service._make_request(url)
+            all_starships_data = []
             
-            if not response or 'results' not in response:
-                self.stdout.write(
-                    self.style.WARNING('No starships data received from SWAPI')
-                )
-                return
-            
-            starships_data = response['results'][:limit]
+            # Fetch all pages of starships
+            while url:
+                response = swapi_service._make_request(url)
+                
+                if not response or 'results' not in response:
+                    self.stdout.write(
+                        self.style.WARNING('No starships data received from SWAPI')
+                    )
+                    break
+                
+                all_starships_data.extend(response['results'])
+                
+                # Check if there's a next page
+                url = response.get('next')
             
             with transaction.atomic():
-                for starship_data in starships_data:
+                for starship_data in all_starships_data:
                     # Check if starship already exists
                     swapi_id = int(starship_data['url'].split('/')[-2])
                     if Starship.objects.filter(swapi_id=swapi_id).exists():
