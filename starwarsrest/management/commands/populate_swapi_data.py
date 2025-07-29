@@ -1,6 +1,5 @@
 import requests
 from django.core.management.base import BaseCommand
-from django.db import transaction
 from django.core.exceptions import ValidationError
 from starwarsrest.models import Character, Film, Starship
 from starwarsrest.services import SwapiService
@@ -112,41 +111,44 @@ def _populate_entities(entity_type):
             
         print(f"Created {len(created_entities)} {entity_type}")
         
-        # Establish relationships if needed
+        # Establish relationships if needed using DAO methods
         if relations_map and created_entities:
             entity_objects = {e.swapi_id: e for e in created_entities}
             
             if entity_type == 'people':  # Characters
                 film_objects = {f.swapi_id: f for f in FilmDAO.list_films()}
                 
-                # Create character-film relationships
+                # Create character-film relationships using DAO
                 for char_swapi_id, film_swapi_ids in relations_map.items():
                     character = entity_objects.get(char_swapi_id)
                     if character:
                         films = [film_objects[film_id] for film_id in film_swapi_ids if film_id in film_objects]
                         if films:
-                            character.films.set(films)
+                            # Use DAO method to set character films
+                            CharacterDAO.set_character_films(character.id, films)
                 print("Established character-film relationships")
             
             elif entity_type == 'starships':
                 film_objects = {f.swapi_id: f for f in FilmDAO.list_films()}
                 character_objects = {c.swapi_id: c for c in CharacterDAO.list_characters()}
                 
-                # Create starship relationships
+                # Create starship relationships using DAO
                 for starship_swapi_id, relations in relations_map.items():
                     starship = entity_objects.get(starship_swapi_id)
                     if starship:
                         # Films relationship
                         film_ids = relations.get('films', [])
                         films = [film_objects[film_id] for film_id in film_ids if film_id in film_objects]
-                        if films:
-                            starship.films.set(films)
                         
                         # Pilots relationship
                         pilot_ids = relations.get('pilots', [])
                         pilots = [character_objects[pilot_id] for pilot_id in pilot_ids if pilot_id in character_objects]
+                        
+                        # Use DAO methods to set starship relationships
+                        if films:
+                            StarshipDAO.set_starship_films(starship.id, films)
                         if pilots:
-                            starship.pilots.set(pilots)
+                            StarshipDAO.set_starship_pilots(starship.id, pilots)
                 
                 print("Established starship relationships")
         
@@ -192,7 +194,7 @@ class Command(BaseCommand):
     
     def handle(self, *args, **options):
         # Check if any films exist using the DAO
-        films_exist = Film.objects.exists()
+        films_exist = FilmDAO.list_films().exists()
         
         if not films_exist and options['force']:
             self.stdout.write(

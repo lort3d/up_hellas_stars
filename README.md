@@ -12,12 +12,14 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - Django Rest Framework is used for the implementation of the REST logic, its widely adopted and provides ready to go authentication/permission methods, serialization etc.
 - Regarding the creation of a service to fetch data from SWAPI, I decided to create a managment command that uses Celery to creates tasks and introduce async logic.
 - I was trying to think of a way and introduce a "I feel a disturbance in the force" logic in that app, that why if you set the env var ALLOW_UNOFFICIAL_RECORDS to false, if you try to use the API to create records that are not found in SWAPI you will be presented with an error.
-- Regarding the xxx, for very large numbers of records, batch create should be made in chucks and not load the memory indefinetily.
-- To make it easier for the assignemet to be tested, after docker-compose up an admin and simple user is created, also SWAPI is used to populate the data. For the tests to run using coverage, run the ./run_tests.sh from the web container
+- Regarding the populate_swapi_data, for very large numbers of records, batch create should be made in chucks and not load the memory indefinetily.
+- To make it easier for the assignemet to be tested, after docker-compose up an admin and simple user(with a token printed on the web container console) is created, also SWAPI is used to populate the data. For the tests to run using coverage, run the ./run_tests.sh from the web container
+- Docker version 25.0.2, build 29cf629 and docker-compose version 1.29.2 was used
 
 ## Feature updates
 - For very large numbers of records fetched by SWAPI, batch create should be made in chunks and not as the current code implementation
 - On next release, populate_swapi_data will facilitate celery beat to check for updated records
+- On next release, tests will be able to provide greater coverage
 
 
 ## Table of Contents

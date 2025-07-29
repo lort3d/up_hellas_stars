@@ -3,7 +3,6 @@ import re
 from django.core.cache import cache
 from django.utils.deprecation import MiddlewareMixin
 from django.http import HttpResponse
-import json
 import logging
 
 # Set up logging

@@ -71,6 +71,18 @@ class CharacterDAO:
             raise ValidationError(f"Error updating character: {str(e)}")
     
     @staticmethod
+    def set_character_films(character_id, films):
+        """Set films for a character"""
+        try:
+            character = Character.objects.get(id=character_id)
+            character.films.set(films)
+            return character
+        except Character.DoesNotExist:
+            raise ValidationError("Character not found")
+        except Exception as e:
+            raise ValidationError(f"Error setting character films: {str(e)}")
+    
+    @staticmethod
     def delete_character(character_id):
         """Delete a character"""
         try:
@@ -94,7 +106,7 @@ class FilmDAO:
     
     @staticmethod
     def get_film_by_dct(filter_params):
-        """Get a film by ID"""
+        """Get a film by filter parameters"""
         try:
             return Film.objects.get(**filter_params)
         except Film.DoesNotExist:
@@ -227,6 +239,30 @@ class StarshipDAO:
             raise e
         except Exception as e:
             raise ValidationError(f"Error updating starship: {str(e)}")
+    
+    @staticmethod
+    def set_starship_films(starship_id, films):
+        """Set films for a starship"""
+        try:
+            starship = Starship.objects.get(id=starship_id)
+            starship.films.set(films)
+            return starship
+        except Starship.DoesNotExist:
+            raise ValidationError("Starship not found")
+        except Exception as e:
+            raise ValidationError(f"Error setting starship films: {str(e)}")
+    
+    @staticmethod
+    def set_starship_pilots(starship_id, pilots):
+        """Set pilots for a starship"""
+        try:
+            starship = Starship.objects.get(id=starship_id)
+            starship.pilots.set(pilots)
+            return starship
+        except Starship.DoesNotExist:
+            raise ValidationError("Starship not found")
+        except Exception as e:
+            raise ValidationError(f"Error setting starship pilots: {str(e)}")
     
     @staticmethod
     def delete_starship(starship_id):
