@@ -27,7 +27,8 @@ class Command(BaseCommand):
 
         # Get or create the token for the user
         token, created = Token.objects.get_or_create(user=user)
-        
+        self.stdout.write('')
+        self.stdout.write('********')
         if created:
             self.stdout.write(
                 self.style.SUCCESS(f'Created new token for {user.username}: {token.key}')
@@ -36,3 +37,5 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.SUCCESS(f'Existing token for {user.username}: {token.key}')
             )
+        self.stdout.write('********')
+        self.stdout.write('')

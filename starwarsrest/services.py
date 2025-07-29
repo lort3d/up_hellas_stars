@@ -136,9 +136,7 @@ class SwapiService:
                 if swapi_film:
                     # Verify the title matches if provided
                     if name and swapi_film['title'].lower() != name.lower():
-                        raise ValidationError(
-                            f"Film title '{name}' does not match SWAPI record with ID {swapi_id}"
-                        )
+                        return False
                     return True
                 else:
                     return False
@@ -168,13 +166,9 @@ class SwapiService:
                 if swapi_starship:
                     # Verify the name and model match if provided
                     if name and swapi_starship['name'].lower() != name.lower():
-                        raise ValidationError(
-                            f"Starship name '{name}' does not match SWAPI record with ID {swapi_id}"
-                        )
+                        return False
                     if model and swapi_starship['model'].lower() != model.lower():
-                        raise ValidationError(
-                            f"Starship model '{model}' does not match SWAPI record with ID {swapi_id}"
-                        )
+                        return False
                     return True
                 else:
                     return False
@@ -185,8 +179,7 @@ class SwapiService:
                 if swapi_starship:
                     # If we also have a model, verify it matches
                     if model and swapi_starship['model'].lower() != model.lower():
-                        # Model doesn't match, but name does - this might be allowed
-                        return ALLOW_UNOFFICIAL_RECORDS
+                        return False
                     return True
                 else:
                     return False
@@ -205,7 +198,8 @@ class SwapiService:
             'height': int(swapi_data['height']) if swapi_data.get('height', '').isdigit() else None,
             'mass': swapi_data.get('mass'),
             'skin_color': swapi_data.get('skin_color'),
-            'homeworld': swapi_data.get('homeworld'),
+            'created': swapi_data.get('created'),
+            'edited': swapi_data.get('edited'),
         }
     
     def populate_film_from_swapi(self, swapi_data):
@@ -218,6 +212,8 @@ class SwapiService:
             'director': swapi_data.get('director'),
             'producer': swapi_data.get('producer'),
             'release_date': swapi_data.get('release_date'),
+            'created': swapi_data.get('created'),
+            'edited': swapi_data.get('edited'),
         }
     
     def populate_starship_from_swapi(self, swapi_data):
@@ -237,4 +233,6 @@ class SwapiService:
             'mglt': swapi_data.get('MGLT'),
             'cargo_capacity': swapi_data.get('cargo_capacity'),
             'consumables': swapi_data.get('consumables'),
+            'created': swapi_data.get('created'),
+            'edited': swapi_data.get('edited'),
         }

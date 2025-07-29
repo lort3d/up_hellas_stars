@@ -3,7 +3,7 @@
 A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 
 
-## Assignment notes
+## Assignment related notes
 - Docker was used for the containarization of the project as POC of usual practices.
 - Docker links the project directory in the containers, it only copies the requirments.
 - Redis cache was not in the assignement instructions but it was implemented as a POC of usual practices. It Caches the get requests and invalidates the cache on model changes.
@@ -14,6 +14,10 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - I was trying to think of a way and introduce a "I feel a disturbance in the force" logic in that app, that why if you set the env var ALLOW_UNOFFICIAL_RECORDS to false, if you try to use the API to create records that are not found in SWAPI you will be presented with an error.
 - Regarding the xxx, for very large numbers of records, batch create should be made in chucks and not load the memory indefinetily.
 - To make it easier for the assignemet to be tested, after docker-compose up an admin and simple user is created, also SWAPI is used to populate the data. For the tests to run using coverage, run the ./run_tests.sh from the web container
+
+## Feature updates
+- For very large numbers of records fetched by SWAPI, batch create should be made in chunks and not as the current code implementation
+- On next release, populate_swapi_data will facilitate celery beat to check for updated records
 
 
 ## Table of Contents

@@ -41,7 +41,6 @@ class CharacterDAO:
         return Character.objects.filter(name__icontains=name)
     
     @staticmethod
-    @transaction.atomic
     def create_character(data):
         """Create a new character"""
         try:
@@ -56,7 +55,6 @@ class CharacterDAO:
             raise ValidationError(f"Error creating character: {str(e)}")
     
     @staticmethod
-    @transaction.atomic
     def update_character(character_id, data):
         """Update an existing character"""
         try:
@@ -73,7 +71,6 @@ class CharacterDAO:
             raise ValidationError(f"Error updating character: {str(e)}")
     
     @staticmethod
-    @transaction.atomic
     def delete_character(character_id):
         """Delete a character"""
         try:
@@ -92,6 +89,14 @@ class FilmDAO:
         """Get a film by ID"""
         try:
             return Film.objects.get(id=film_id)
+        except Film.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def get_film_by_dct(filter_params):
+        """Get a film by ID"""
+        try:
+            return Film.objects.get(**filter_params)
         except Film.DoesNotExist:
             return None
     
@@ -122,7 +127,6 @@ class FilmDAO:
         return Film.objects.filter(name__icontains=name)
     
     @staticmethod
-    @transaction.atomic
     def create_film(data):
         """Create a new film"""
         try:
@@ -134,7 +138,6 @@ class FilmDAO:
             raise ValidationError(f"Error creating film: {str(e)}")
     
     @staticmethod
-    @transaction.atomic
     def update_film(film_id, data):
         """Update an existing film"""
         try:
@@ -151,7 +154,6 @@ class FilmDAO:
             raise ValidationError(f"Error updating film: {str(e)}")
     
     @staticmethod
-    @transaction.atomic
     def delete_film(film_id):
         """Delete a film"""
         try:
@@ -200,7 +202,6 @@ class StarshipDAO:
         return Starship.objects.filter(name__icontains=name)
     
     @staticmethod
-    @transaction.atomic
     def create_starship(data):
         """Create a new starship"""
         try:
@@ -212,7 +213,6 @@ class StarshipDAO:
             raise ValidationError(f"Error creating starship: {str(e)}")
     
     @staticmethod
-    @transaction.atomic
     def update_starship(starship_id, data):
         """Update an existing starship"""
         try:
@@ -229,7 +229,6 @@ class StarshipDAO:
             raise ValidationError(f"Error updating starship: {str(e)}")
     
     @staticmethod
-    @transaction.atomic
     def delete_starship(starship_id):
         """Delete a starship"""
         try:
