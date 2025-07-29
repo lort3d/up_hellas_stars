@@ -169,35 +169,34 @@ class Command(BaseCommand):
     
     def add_arguments(self, parser):
         parser.add_argument(
-            '--async',
-            action='store_true',
-            help='Run population tasks asynchronously with Celery',
-            default=True  # Make async the default behavior
+            '--force',
+            help='Forces the population update',
+            default=False
         )
     
     def handle(self, *args, **options):
-        # Always run asynchronously with Celery
-        self.stdout.write(
-            self.style.SUCCESS('Starting asynchronous population of SWAPI data with Celery')
-        )
-        
-        try:
-            # Chain tasks to run sequentially
-            task_chain = chain(
-                populate_films_task.s(),
-                populate_characters_task.s(),
-                populate_starships_task.s()
+        if not Film.objects.filter().exists() and options['force']:
+            self.stdout.write(
+                self.style.SUCCESS('Starting asynchronous population of SWAPI data with Celery')
             )
-            result = task_chain.apply_async()
             
-            self.stdout.write(
-                self.style.SUCCESS(f'Created task chain with ID: {result.id}')
-            )
-        except CeleryError as e:
-            self.stdout.write(
-                self.style.ERROR(f"Celery error: {str(e)}")
-            )
-        except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"Error creating Celery tasks: {str(e)}")
-            )
+            try:
+                # Chain tasks to run sequentially
+                task_chain = chain(
+                    populate_films_task.s(),
+                    populate_characters_task.s(),
+                    populate_starships_task.s()
+                )
+                result = task_chain.apply_async()
+                
+                self.stdout.write(
+                    self.style.SUCCESS(f'Created task chain with ID: {result.id}')
+                )
+            except CeleryError as e:
+                self.stdout.write(
+                    self.style.ERROR(f"Celery error: {str(e)}")
+                )
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(f"Error creating Celery tasks: {str(e)}")
+                )

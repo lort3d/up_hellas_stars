@@ -2,6 +2,20 @@
 
 A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 
+
+## Assignment notes
+- Docker was used for the containarization of the project as POC of usual practices.
+- Docker links the project directory in the containers, it only copies the requirments.
+- Redis cache was not in the assignement instructions but it was implemented as a POC of usual practices. It Caches the get requests and invalidates the cache on model changes.
+- Nginx, gunicorn cache was not in the assignement instructions but it was implemented as a POC of usual practices. Gunicorn starts with the reload flag as part of the dev env.
+- Django was used because Im more familiar with the framework. Judging by the assignment instructions about "database errors", I supposed that you propably wanted to see a Data Access Object layer, even thought its not "native" to django logic.
+- Django Rest Framework is used for the implementation of the REST logic, its widely adopted and provides ready to go authentication/permission methods, serialization etc.
+- Regarding the creation of a service to fetch data from SWAPI, I decided to create a managment command that uses Celery to creates tasks and introduce async logic.
+- I was trying to think of a way and introduce a "I feel a disturbance in the force" logic in that app, that why if you set the env var ALLOW_UNOFFICIAL_RECORDS to false, if you try to use the API to create records that are not found in SWAPI you will be presented with an error.
+- Regarding the xxx, for very large numbers of records, batch create should be made in chucks and not load the memory indefinetily.
+- To make it easier for the assignemet to be tested, after docker-compose up an admin and simple user is created, also SWAPI is used to populate the data. For the tests to run using coverage, run the ./run_tests.sh from the web container
+
+
 ## Table of Contents
 
 - [Features](#features)
@@ -19,8 +33,6 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - [Data Population](#data-population)
 - [Testing](#testing)
 - [Project Structure](#project-structure)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Features
 
@@ -56,16 +68,6 @@ The application follows a layered architecture pattern:
 4. **Views Layer** - Business logic and REST API endpoints
 5. **Serializers Layer** - Data serialization/deserialization
 
-```mermaid
-graph TD
-    A[Client] --> B[Views]
-    B --> C[Serializers]
-    B --> D[DAO]
-    D --> E[Models]
-    B --> F[Services]
-    F --> G[SWAPI]
-    B --> H[Cache]
-```
 
 ## Requirements
 
@@ -187,8 +189,8 @@ docker-compose exec web ./run_tests.sh
 
 The project includes:
 - Tests for data access objects
-- Unit tests for models and services
-- Integration tests for API endpoints
+- Tests for models and services
+- Tests for API endpoints
 - Tests for management commands
 
 ## Project Structure

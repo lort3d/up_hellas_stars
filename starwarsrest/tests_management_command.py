@@ -218,7 +218,6 @@ class PopulateSwapiDataTest(TestCase):
         mock_make_request.return_value = None
         
         # Run the function directly
-        swapi_service = SwapiService()
         result = _populate_entities(
             'films',
             Film,

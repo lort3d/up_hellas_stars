@@ -45,7 +45,10 @@ class CharacterDAO:
     def create_character(data):
         """Create a new character"""
         try:
+            films_data = data.pop('films', [])
             character = Character.objects.create(**data)
+            if films_data:
+                character.films.set(films_data)
             return character
         except ValidationError as e:
             raise e

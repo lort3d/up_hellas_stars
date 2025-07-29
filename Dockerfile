@@ -9,14 +9,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        postgresql-client \
-        gcc \
-        python3-dev \
-        curl \
-        redis-server \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends postgresql-client gcc python3-dev
 
 # Install Python dependencies
 COPY requirements.txt /app/
@@ -33,6 +26,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Set entrypoint
-ENTRYPOINT ["./entrypoint.sh"]
+
 

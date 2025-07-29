@@ -5,9 +5,9 @@ from django.core.exceptions import ValidationError
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Character, Film, Starship
 from .serializers import (
-    CharacterSerializer, CharacterCreateSerializer,
-    FilmSerializer, FilmCreateSerializer,
-    StarshipSerializer, StarshipCreateSerializer
+    CharacterSerializer,
+    FilmSerializer,
+    StarshipSerializer
 )
 from .dao import CharacterDAO, FilmDAO, StarshipDAO
 from .services import SwapiService, ALLOW_UNOFFICIAL_RECORDS
@@ -25,10 +25,7 @@ class CharacterViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name']
     permission_classes = [IsAuthenticatedOrReadOnly]
     
-    def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
-            return CharacterCreateSerializer
-        return CharacterSerializer
+    
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -119,10 +116,7 @@ class FilmViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name']
     permission_classes = [IsAuthenticatedOrReadOnly]
     
-    def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
-            return FilmCreateSerializer
-        return FilmSerializer
+    
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -213,10 +207,7 @@ class StarshipViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name', 'model']
     permission_classes = [IsAuthenticatedOrReadOnly]
     
-    def get_serializer_class(self):
-        if self.action == 'create' or self.action == 'update' or self.action == 'partial_update':
-            return StarshipCreateSerializer
-        return StarshipSerializer
+    
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
