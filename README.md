@@ -13,6 +13,7 @@ A Django REST API for Star Wars data with integration to SWAPI (Star Wars API).
 - Regarding the creation of a service to fetch data from SWAPI, I decided to create a managment command that uses Celery to creates tasks and introduce async logic.
 - I was trying to think of a way and introduce a "I feel a disturbance in the force" logic in that app, that why if you set the env var ALLOW_UNOFFICIAL_RECORDS to false, if you try to use the API to create records that are not found in SWAPI you will be presented with an error.
 - Regarding the populate_swapi_data, for very large numbers of records, batch create should be made in chucks and not load the memory indefinetily.
+- Coverage report is under htmlcov/index.html
 - To make it easier for the assignemet to be tested, after docker-compose up an admin and simple user(with a token printed on the web container console) is created, also SWAPI is used to populate the data. For the tests to run using coverage, run the ./run_tests.sh from the web container
 - Docker version 25.0.2, build 29cf629 and docker-compose version 1.29.2 was used
 
@@ -199,32 +200,6 @@ The project includes:
 - Tests for API endpoints
 - Tests for management commands
 
-## Coverage report
-Name                                                       Stmts   Miss  Cover
-starwarsrest/__init__.py                                       2      0   100%
-starwarsrest/cache_middleware.py                              38     38     0%
-starwarsrest/cache_utils.py                                    5      5     0%
-starwarsrest/celery.py                                         6      0   100%
-starwarsrest/dao.py                                          210     56    73%
-starwarsrest/management/__init__.py                            0      0   100%
-starwarsrest/management/commands/__init__.py                   0      0   100%
-starwarsrest/management/commands/create_default_users.py      14      0   100%
-starwarsrest/management/commands/get_user_token.py            24      0   100%
-starwarsrest/management/commands/populate_swapi_data.py      131     25    81%
-starwarsrest/models.py                                        57      3    95%
-starwarsrest/permissions.py                                    6      0   100%
-starwarsrest/serializers.py                                   28      0   100%
-starwarsrest/services.py                                     117     77    34%
-starwarsrest/signals.py                                       12      0   100%
-starwarsrest/tasks.py                                          1      1     0%
-starwarsrest/tests.py                                          3      0   100%
-starwarsrest/tests_create_default_users.py                    31      0   100%
-starwarsrest/tests_dao.py                                    169      0   100%
-starwarsrest/tests_endpoints.py                              179      0   100%
-starwarsrest/tests_get_user_token.py                          32      0   100%
-starwarsrest/tests_management_command.py                      67      0   100%
-starwarsrest/views.py                                        206     59    71%
-TOTAL                                                       1338    264    80%
 
 ## Project Structure
 
