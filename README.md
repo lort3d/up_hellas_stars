@@ -201,7 +201,6 @@ The project includes:
 
 ## Coverage report
 Name                                                       Stmts   Miss  Cover
-------------------------------------------------------------------------------
 starwarsrest/__init__.py                                       2      0   100%
 starwarsrest/cache_middleware.py                              38     38     0%
 starwarsrest/cache_utils.py                                    5      5     0%
@@ -225,7 +224,6 @@ starwarsrest/tests_endpoints.py                              179      0   100%
 starwarsrest/tests_get_user_token.py                          32      0   100%
 starwarsrest/tests_management_command.py                      67      0   100%
 starwarsrest/views.py                                        206     59    71%
-------------------------------------------------------------------------------
 TOTAL                                                       1338    264    80%
 
 ## Project Structure
