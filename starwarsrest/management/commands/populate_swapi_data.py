@@ -4,19 +4,17 @@ from django.db import transaction
 from django.core.exceptions import ValidationError
 from starwarsrest.models import Character, Film, Starship
 from starwarsrest.services import SwapiService
+from starwarsrest.dao import CharacterDAO, FilmDAO, StarshipDAO
 
 from celery import shared_task, chain
 from celery.exceptions import CeleryError
 
 
-def _populate_entities(entity_type, model_class):
-    """Common function to populate entities from SWAPI
+def _populate_entities(entity_type):
+    """Common function to populate entities from SWAPI using DAO objects
     
     Args:
-        swapi_service: Instance of SwapiService
         entity_type: Type of entity ('films', 'people', 'starships')
-        model_class: Django model class (Film, Character, Starship)
-        populate_method: Method to convert SWAPI data to model dict
     """
     print(f'Populating {entity_type}...')
     
@@ -46,9 +44,17 @@ def _populate_entities(entity_type, model_class):
             url = response.get('next')
         
         # Filter out entities that already exist
-        existing_swapi_ids = set(model_class.objects.filter(swapi_id__in=[
-            int(entity_data['url'].split('/')[-2]) for entity_data in all_entities_data
-        ]).values_list('swapi_id', flat=True))
+        entity_swapi_ids = [int(entity_data['url'].split('/')[-2]) for entity_data in all_entities_data]
+        
+        # Get existing swapi_ids from the database using DAOs
+        if entity_type == 'films':
+            existing_objects = FilmDAO.list_films()
+        elif entity_type == 'people':
+            existing_objects = CharacterDAO.list_characters()
+        elif entity_type == 'starships':
+            existing_objects = StarshipDAO.list_starships()
+            
+        existing_swapi_ids = set(obj.swapi_id for obj in existing_objects if obj.swapi_id in entity_swapi_ids)
         
         entities_to_create = []
         relations_map = {}  # Map entity swapi_id to related swapi_ids
@@ -57,7 +63,7 @@ def _populate_entities(entity_type, model_class):
             swapi_id = int(entity_data['url'].split('/')[-2])
             if swapi_id not in existing_swapi_ids:
                 entity_dict = populate_method(entity_data)
-                entities_to_create.append(model_class(**entity_dict))
+                entities_to_create.append(entity_dict)
                 
                 # Store relationships based on entity type
                 if entity_type == 'people':  # Characters
@@ -85,53 +91,66 @@ def _populate_entities(entity_type, model_class):
                 name = entity_data.get('title') or entity_data.get('name', 'Unknown')
                 print(f"{entity_type[:-1].capitalize()} '{name}' already exists")
         
-        # Bulk create entities
-        if entities_to_create:
-            created_entities = model_class.objects.bulk_create(entities_to_create)
-            print(f"Created {len(created_entities)} {entity_type}")
-            
-            # Establish relationships if needed
-            if relations_map:
-                entity_objects = {e.swapi_id: e for e in created_entities}
-                
-                if entity_type == 'people':  # Characters
-                    film_objects = {f.swapi_id: f for f in Film.objects.all()}
-                    
-                    # Create character-film relationships
-                    for char_swapi_id, film_swapi_ids in relations_map.items():
-                        character = entity_objects.get(char_swapi_id)
-                        if character:
-                            films = [film_objects[film_id] for film_id in film_swapi_ids if film_id in film_objects]
-                            if films:
-                                character.films.set(films)
-                    print("Established character-film relationships")
-                
+        # Bulk create entities using DAO
+        created_entities = []
+        for entity_dict in entities_to_create:
+            try:
+                # For characters and starships, we need to handle relationships separately
+                # Remove relationship fields for now - we'll set them later
+                entity = None
+                if entity_type == 'films':
+                    entity = FilmDAO.create_film(entity_dict)
+                elif entity_type == 'people':
+                    entity = CharacterDAO.create_character(entity_dict)
                 elif entity_type == 'starships':
-                    film_objects = {f.swapi_id: f for f in Film.objects.all()}
-                    character_objects = {c.swapi_id: c for c in Character.objects.all()}
-                    
-                    # Create starship relationships
-                    for starship_swapi_id, relations in relations_map.items():
-                        starship = entity_objects.get(starship_swapi_id)
-                        if starship:
-                            # Films relationship
-                            film_ids = relations['films']
-                            films = [film_objects[film_id] for film_id in film_ids if film_id in film_objects]
-                            if films:
-                                starship.films.set(films)
-                            
-                            # Pilots relationship
-                            pilot_ids = relations['pilots']
-                            pilots = [character_objects[pilot_id] for pilot_id in pilot_ids if pilot_id in character_objects]
-                            if pilots:
-                                starship.pilots.set(pilots)
-                    
-                    print("Established starship relationships")
+                    entity = StarshipDAO.create_starship(entity_dict)
+                created_entities.append(entity)
+            except ValidationError as e:
+                print(f"Validation error creating entity: {str(e)}")
+            except Exception as e:
+                print(f"Error creating entity: {str(e)}")
             
-            entity_count = len(created_entities)
-        else:
-            entity_count = 0
+        print(f"Created {len(created_entities)} {entity_type}")
+        
+        # Establish relationships if needed
+        if relations_map and created_entities:
+            entity_objects = {e.swapi_id: e for e in created_entities}
             
+            if entity_type == 'people':  # Characters
+                film_objects = {f.swapi_id: f for f in FilmDAO.list_films()}
+                
+                # Create character-film relationships
+                for char_swapi_id, film_swapi_ids in relations_map.items():
+                    character = entity_objects.get(char_swapi_id)
+                    if character:
+                        films = [film_objects[film_id] for film_id in film_swapi_ids if film_id in film_objects]
+                        if films:
+                            character.films.set(films)
+                print("Established character-film relationships")
+            
+            elif entity_type == 'starships':
+                film_objects = {f.swapi_id: f for f in FilmDAO.list_films()}
+                character_objects = {c.swapi_id: c for c in CharacterDAO.list_characters()}
+                
+                # Create starship relationships
+                for starship_swapi_id, relations in relations_map.items():
+                    starship = entity_objects.get(starship_swapi_id)
+                    if starship:
+                        # Films relationship
+                        film_ids = relations.get('films', [])
+                        films = [film_objects[film_id] for film_id in film_ids if film_id in film_objects]
+                        if films:
+                            starship.films.set(films)
+                        
+                        # Pilots relationship
+                        pilot_ids = relations.get('pilots', [])
+                        pilots = [character_objects[pilot_id] for pilot_id in pilot_ids if pilot_id in character_objects]
+                        if pilots:
+                            starship.pilots.set(pilots)
+                
+                print("Established starship relationships")
+        
+        entity_count = len(created_entities)
         return f"Successfully populated {entity_count} {entity_type}"
     except Exception as e:
         raise Exception(f"Error populating {entity_type}: {str(e)}")
@@ -142,7 +161,6 @@ def populate_films_task(*args, **kwargs):
     """Celery task to populate films from SWAPI"""
     return _populate_entities(
         'films',
-        Film,
     )
 
 
@@ -151,7 +169,6 @@ def populate_characters_task(*args, **kwargs):
     """Celery task to populate characters from SWAPI"""
     return _populate_entities(
         'people',
-        Character,
     )
 
 
@@ -160,7 +177,6 @@ def populate_starships_task(*args, **kwargs):
     """Celery task to populate starships from SWAPI"""
     return _populate_entities(
         'starships',
-        Starship,
     )
 
 
@@ -175,7 +191,10 @@ class Command(BaseCommand):
         )
     
     def handle(self, *args, **options):
-        if not Film.objects.filter().exists() and options['force']:
+        # Check if any films exist using the DAO
+        films_exist = Film.objects.exists()
+        
+        if not films_exist and options['force']:
             self.stdout.write(
                 self.style.SUCCESS('Starting asynchronous population of SWAPI data with Celery')
             )

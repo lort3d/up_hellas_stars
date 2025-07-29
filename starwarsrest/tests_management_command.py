@@ -202,7 +202,6 @@ class PopulateSwapiDataTest(TestCase):
         # Run the function directly
         result = _populate_entities(
             'films',
-            Film,
         )
         
         # Check that only one film was created (the other already existed)
@@ -220,7 +219,6 @@ class PopulateSwapiDataTest(TestCase):
         # Run the function directly
         result = _populate_entities(
             'films',
-            Film,
         )
         
         # Check that no records were created
@@ -239,7 +237,6 @@ class PopulateSwapiDataTest(TestCase):
         with self.assertRaises(Exception) as context:
             _populate_entities(
                 'films',
-                Film,
             )
         
         # Check that the exception message is correct
