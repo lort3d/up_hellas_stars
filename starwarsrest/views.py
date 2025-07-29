@@ -6,8 +6,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Character, Film, Starship
 from .serializers import (
     CharacterSerializer,
+    CreateCharacterSerializer,
     FilmSerializer,
-    StarshipSerializer
+    StarshipSerializer,
+    CreateStarshipSerializer
 )
 from .dao import CharacterDAO, FilmDAO, StarshipDAO
 from .services import SwapiService, ALLOW_UNOFFICIAL_RECORDS
@@ -25,10 +27,10 @@ class CharacterViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name']
     permission_classes = [IsAuthenticatedOrReadOnly]
     
-    
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    @action(detail=False, methods=['post'], serializer_class=CreateCharacterSerializer)
+    def create_character(self, request):
+        """Endpoint for creating a character with the CreateCharacterSerializer"""
+        serializer = CreateCharacterSerializer(data=request.data)
         if serializer.is_valid():
             # Validate against SWAPI if needed
             name = serializer.validated_data.get('name')
@@ -53,23 +55,15 @@ class CharacterViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def update(self, request, *args, **kwargs):
-        character_id = kwargs.get('pk')
-        serializer = self.get_serializer(data=request.data)
-        
-        if serializer.is_valid():
-            try:
-                character = CharacterDAO.update_character(character_id, serializer.validated_data)
-                response_serializer = CharacterSerializer(character)
-                return Response(response_serializer.data)
-            except ValidationError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def create(self, request, *args, **kwargs):
+        return self.create_character(request)
     
-    def partial_update(self, request, *args, **kwargs):
+    @action(detail=True, methods=['put'], serializer_class=CreateCharacterSerializer)
+    def update_character(self, request, pk=None):
+        """Endpoint for updating a character with the CreateCharacterSerializer"""
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer = CreateCharacterSerializer(instance, data=request.data)
+        
         if serializer.is_valid():
             try:
                 character = CharacterDAO.update_character(instance.id, serializer.validated_data)
@@ -79,6 +73,27 @@ class CharacterViewSet(viewsets.ModelViewSet):
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def update(self, request, *args, **kwargs):
+        return self.update_character(request, **kwargs)
+    
+    @action(detail=True, methods=['patch'], serializer_class=CreateCharacterSerializer)
+    def partial_update_character(self, request, pk=None):
+        """Endpoint for partially updating a character with the CreateCharacterSerializer"""
+        instance = self.get_object()
+        serializer = CreateCharacterSerializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            try:
+                character = CharacterDAO.update_character(instance.id, serializer.validated_data)
+                response_serializer = CharacterSerializer(character)
+                return Response(response_serializer.data)
+            except ValidationError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def partial_update(self, request, *args, **kwargs):
+        return self.partial_update_character(request, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
         character_id = kwargs.get('pk')
@@ -145,12 +160,12 @@ class FilmViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def update(self, request, *args, **kwargs):
-        film_id = kwargs.get('pk')
-        serializer = self.get_serializer(data=request.data)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data)
         
         if serializer.is_valid():
             try:
-                film = FilmDAO.update_film(film_id, serializer.validated_data)
+                film = FilmDAO.update_film(instance.id, serializer.validated_data)
                 response_serializer = FilmSerializer(film)
                 return Response(response_serializer.data)
             except ValidationError as e:
@@ -207,10 +222,10 @@ class StarshipViewSet(viewsets.ModelViewSet):
     filterset_fields = ['name', 'model']
     permission_classes = [IsAuthenticatedOrReadOnly]
     
-    
-    
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+    @action(detail=False, methods=['post'], serializer_class=CreateStarshipSerializer)
+    def create_starship(self, request):
+        """Endpoint for creating a starship with the CreateStarshipSerializer"""
+        serializer = CreateStarshipSerializer(data=request.data)
         if serializer.is_valid():
             # Validate against SWAPI if needed
             name = serializer.validated_data.get('name')
@@ -236,23 +251,15 @@ class StarshipViewSet(viewsets.ModelViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def update(self, request, *args, **kwargs):
-        starship_id = kwargs.get('pk')
-        serializer = self.get_serializer(data=request.data)
-        
-        if serializer.is_valid():
-            try:
-                starship = StarshipDAO.update_starship(starship_id, serializer.validated_data)
-                response_serializer = StarshipSerializer(starship)
-                return Response(response_serializer.data)
-            except ValidationError as e:
-                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def create(self, request, *args, **kwargs):
+        return self.create_starship(request)
     
-    def partial_update(self, request, *args, **kwargs):
+    @action(detail=True, methods=['put'], serializer_class=CreateStarshipSerializer)
+    def update_starship(self, request, pk=None):
+        """Endpoint for updating a starship with the CreateStarshipSerializer"""
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer = CreateStarshipSerializer(instance, data=request.data)
+        
         if serializer.is_valid():
             try:
                 starship = StarshipDAO.update_starship(instance.id, serializer.validated_data)
@@ -262,6 +269,27 @@ class StarshipViewSet(viewsets.ModelViewSet):
                 return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def update(self, request, *args, **kwargs):
+        return self.update_starship(request, **kwargs)
+    
+    @action(detail=True, methods=['patch'], serializer_class=CreateStarshipSerializer)
+    def partial_update_starship(self, request, pk=None):
+        """Endpoint for partially updating a starship with the CreateStarshipSerializer"""
+        instance = self.get_object()
+        serializer = CreateStarshipSerializer(instance, data=request.data, partial=True)
+        if serializer.is_valid():
+            try:
+                starship = StarshipDAO.update_starship(instance.id, serializer.validated_data)
+                response_serializer = StarshipSerializer(starship)
+                return Response(response_serializer.data)
+            except ValidationError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def partial_update(self, request, *args, **kwargs):
+        return self.partial_update_starship(request, **kwargs)
     
     def destroy(self, request, *args, **kwargs):
         starship_id = kwargs.get('pk')
